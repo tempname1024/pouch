@@ -1,0 +1,7 @@
+Usage: pouch.sh HTML_FILE_PATH
+
+      HTML_FILE is a pocket-exported document containing the set of URLs to save
+
+Dependencies:
+
+      google-chrome 59+ (headless mode support)
