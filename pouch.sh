@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 
 PROGRAM="${0##*/}"
+AGENT="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0"
 
 cmd_usage() {
     cat >&2 <<-_EOF
-    Usage: $PROGRAM HTML_FILE_PATH
+Usage: $PROGRAM HTML_FILE_PATH
 
-      HTML_FILE is a pocket-exported document containing the set of URLs to save
+  HTML_FILE is a pocket-exported document containing the set of URLs to save
 
-    Dependencies:
+Dependencies:
 
-      google-chrome 59+ (headless mode support)
-    _EOF
+  google-chrome 59+ (headless mode support)
+  curl
+_EOF
 }
 
 get_urls() {
@@ -27,12 +29,22 @@ url_to_filename() {
 
 save() {
     read url
+
+    if [[ -f "$(url_to_filename $url).pdf" ]]; then
+        return 0
+    fi
+
+    content_type=$(curl -s -I -A "$AGENT" "$url" | grep --ignore-case '^content-type:' | cut -d' ' -f2)
     pdfname=$(url_to_filename $url).pdf
 
-    if [[ ! -f ./$pdfname ]]; then
+    if [[ $content_type == *"application/pdf"* ]]; then
         echo [+] $url...
-        google-chrome --headless --disable-gpu --print-to-pdf=$pdfname $url
+        curl -A "$AGENT" "$url" -o "$pdfname"
+    else
+        echo [+] $url...
+        google-chrome --headless --disable-gpu --print-to-pdf="$pdfname" "$url"
     fi
+
 }
 
 if [[ $# -eq 1 && ( $1 == --help || $1 == -h || $1 == help ) ]]; then
